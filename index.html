@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Чна</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    background: #000;
+    color: #fff;
+    font-family: 'Courier New', monospace;
+    overflow-x: hidden;
+  }
+
+  .section {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    text-align: center;
+  }
+
+  h1 {
+    font-size: clamp(3rem, 15vw, 10rem);
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    animation: fadeIn 1.5s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Экран со смайликами */
+  #smileys {
+    position: fixed;
+    inset: 0;
+    background: #fff;
+    display: none;
+    overflow: hidden;
+    z-index: 100;
+  }
+
+  #smileys.active { display: block; }
+
+  .smiley {
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    animation: fall linear forwards;
+  }
+
+  @keyframes fall {
+    from { transform: translateY(-100px) rotate(0deg); }
+    to { transform: translateY(110vh) rotate(360deg); }
+  }
+
+  #smileys .msg {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #000;
+    font-size: clamp(1.5rem, 6vw, 3rem);
+    font-weight: 900;
+    text-align: center;
+    z-index: 200;
+    pointer-events: none;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    animation: pulse 1.5s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+  }
+
+  /* Секция Верити */
+  #verity {
+    background: #000;
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  #verity .title {
+    font-size: clamp(2rem, 10vw, 6rem);
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+  }
+
+  #verity .sub {
+    font-size: clamp(0.9rem, 3vw, 1.2rem);
+    opacity: 0.6;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+</style>
+</head>
+<body>
+
+  <!-- Первый экран -->
+  <div class="section">
+    <h1>Чна</h1>
+  </div>
+
+  <!-- Второй экран -->
+  <div class="section" id="verity">
+    <div class="title">Верити</div>
+    <div class="sub">потряси телефон</div>
+  </div>
+
+  <!-- Экран со смайликами -->
+  <div id="smileys">
+    <div class="msg">потряси телефон</div>
+  </div>
+
+<script>
+  const smileysEl = document.getElementById('smileys');
+  const verityEl = document.getElementById('verity');
+  let triggered = false;
+
+  // Рисуем жёлтый смайлик в SVG
+  function createSmiley() {
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('viewBox', '0 0 100 100');
+    svg.classList.add('smiley');
+
+    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    circle.setAttribute('cx', '50');
+    circle.setAttribute('cy', '50');
+    circle.setAttribute('r', '45');
+    circle.setAttribute('fill', '#FFD700');
+    circle.setAttribute('stroke', '#000');
+    circle.setAttribute('stroke-width', '3');
+    svg.appendChild(circle);
+
+    // Глаза
+    [-18, 18].forEach(x => {
+      const eye = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      eye.setAttribute('cx', 50 + x);
+      eye.setAttribute('cy', '38');
+      eye.setAttribute('r', '6');
+      eye.setAttribute('fill', '#000');
+      svg.appendChild(eye);
+    });
+
+    // Улыбка
+    const mouth = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    mouth.setAttribute('d', 'M 30 58 Q 50 82 70 58');
+    mouth.setAttribute('stroke', '#000');
+    mouth.setAttribute('stroke-width', '5');
+    mouth.setAttribute('fill', 'none');
+    mouth.setAttribute('stroke-linecap', 'round');
+    svg.appendChild(mouth);
+
+    return svg;
+  }
+
+  function launchSmileys() {
+    if (triggered) return;
+    triggered = true;
+
+    smileysEl.classList.add('active');
+    smileysEl.style.display = 'block';
+
+    // Заполняем экран падающими смайликами
+    const count = 40;
+    for (let i = 0; i < count; i++) {
+      setTimeout(() => {
+        const s = createSmiley();
+        s.style.left = Math.random() * 100 + 'vw';
+        s.style.width = (40 + Math.random() * 60) + 'px';
+        s.style.height = s.style.width;
+        s.style.animationDuration = (2 + Math.random() * 3) + 's';
+        s.style.animationDelay = Math.random() * 0.5 + 's';
+        s.style.animationIterationCount = 'infinite';
+        smileysEl.appendChild(s);
+      }, i * 80);
+    }
+
+    // Обновляем надпись
+    const msg = smileysEl.querySelector('.msg');
+    msg.textContent = 'ты справишься 💛';
+  }
+
+  // Детект скролла до секции Верити
+  function checkScroll() {
+    const rect = verityEl.getBoundingClientRect();
+    if (rect.top < window.innerHeight * 0.6) {
+      launchSmileys();
+    }
+  }
+
+  window.addEventListener('scroll', checkScroll);
+
+  // Детект тряски
+  let lastX = null, lastY = null, lastZ = null;
+  const threshold = 15;
+
+  window.addEventListener('devicemotion', (e) => {
+    const acc = e.accelerationIncludingGravity;
+    if (!acc) return;
+
+    if (lastX !== null) {
+      const delta = Math.abs(acc.x - lastX) + Math.abs(acc.y - lastY) + Math.abs(acc.z - lastZ);
+      if (delta > threshold) launchSmileys();
+    }
+
+    lastX = acc.x; lastY = acc.y; lastZ = acc.z;
+  });
+
+  // Фоллбек для десктопа — клик
+  verityEl.addEventListener('click', launchSmileys);
+</script>
+</body>
+</html>
