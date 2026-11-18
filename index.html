@@ -10,7 +10,7 @@
   html, body {
     background: #000;
     color: #fff;
-    font-family: 'Courier New', monospace;
+    font-family: Arial, sans-serif;
     overflow-x: hidden;
   }
 
@@ -24,16 +24,15 @@
   }
 
   h1 {
-    font-size: clamp(3rem, 15vw, 10rem);
-    font-weight: 900;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
+    font-size: clamp(2rem, 8vw, 5rem);
+    font-weight: 400;
+    letter-spacing: 0.02em;
     animation: fadeIn 1.5s ease;
   }
 
   @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
+    from { opacity: 0; }
+    to { opacity: 1; }
   }
 
   /* Экран со смайликами */
@@ -60,46 +59,25 @@
     to { transform: translateY(110vh) rotate(360deg); }
   }
 
-  #smileys .msg {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: #000;
-    font-size: clamp(1.5rem, 6vw, 3rem);
-    font-weight: 900;
-    text-align: center;
-    z-index: 200;
-    pointer-events: none;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    animation: pulse 1.5s infinite;
-  }
-
-  @keyframes pulse {
-    0%, 100% { opacity: 0.6; }
-    50% { opacity: 1; }
-  }
-
-  /* Секция Верити */
-  #verity {
+  /* Финальный экран */
+  #final {
+    position: fixed;
+    inset: 0;
     background: #000;
-    flex-direction: column;
-    gap: 2rem;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 300;
   }
 
-  #verity .title {
+  #final.active { display: flex; }
+
+  #final h2 {
     font-size: clamp(2rem, 10vw, 6rem);
-    font-weight: 900;
-    text-transform: uppercase;
-    letter-spacing: 0.15em;
-  }
-
-  #verity .sub {
-    font-size: clamp(0.9rem, 3vw, 1.2rem);
-    opacity: 0.6;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
+    font-weight: 400;
+    color: #fff;
+    letter-spacing: 0.05em;
+    animation: fadeIn 1.2s ease;
   }
 </style>
 </head>
@@ -110,23 +88,22 @@
     <h1>Чна</h1>
   </div>
 
-  <!-- Второй экран -->
-  <div class="section" id="verity">
-    <div class="title">Верити</div>
-    <div class="sub">потряси телефон</div>
-  </div>
+  <!-- Пустой экран для скролла, чтобы долистать до конца -->
+  <div class="section"></div>
 
   <!-- Экран со смайликами -->
-  <div id="smileys">
-    <div class="msg">потряси телефон</div>
+  <div id="smileys"></div>
+
+  <!-- Финальный экран -->
+  <div id="final">
+    <h2>жырітi,ну ты чаго пупс заплакала</h2>
   </div>
 
 <script>
   const smileysEl = document.getElementById('smileys');
-  const verityEl = document.getElementById('verity');
+  const finalEl = document.getElementById('final');
   let triggered = false;
 
-  // Рисуем жёлтый смайлик в SVG
   function createSmiley() {
     const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     svg.setAttribute('viewBox', '0 0 100 100');
@@ -141,7 +118,6 @@
     circle.setAttribute('stroke-width', '3');
     svg.appendChild(circle);
 
-    // Глаза
     [-18, 18].forEach(x => {
       const eye = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
       eye.setAttribute('cx', 50 + x);
@@ -151,7 +127,6 @@
       svg.appendChild(eye);
     });
 
-    // Улыбка
     const mouth = document.createElementNS('http://www.w3.org/2000/svg', 'path');
     mouth.setAttribute('d', 'M 30 58 Q 50 82 70 58');
     mouth.setAttribute('stroke', '#000');
@@ -168,56 +143,38 @@
     triggered = true;
 
     smileysEl.classList.add('active');
-    smileysEl.style.display = 'block';
 
-    // Заполняем экран падающими смайликами
-    const count = 40;
+    // Смайлики падают и ОСТАЮТСЯ на экране (не исчезают)
+    const count = 45;
     for (let i = 0; i < count; i++) {
       setTimeout(() => {
         const s = createSmiley();
-        s.style.left = Math.random() * 100 + 'vw';
+        s.style.left = Math.random() * 95 + 'vw';
+        s.style.top = Math.random() * 90 + 'vh';
         s.style.width = (40 + Math.random() * 60) + 'px';
         s.style.height = s.style.width;
-        s.style.animationDuration = (2 + Math.random() * 3) + 's';
-        s.style.animationDelay = Math.random() * 0.5 + 's';
-        s.style.animationIterationCount = 'infinite';
         smileysEl.appendChild(s);
-      }, i * 80);
+      }, i * 70);
     }
-
-    // Обновляем надпись
-    const msg = smileysEl.querySelector('.msg');
-    msg.textContent = 'ты справишься 💛';
   }
 
-  // Детект скролла до секции Верити
+  // При скролле: показываем смайлики, а в самом конце — финал
   function checkScroll() {
-    const rect = verityEl.getBoundingClientRect();
-    if (rect.top < window.innerHeight * 0.6) {
+    const scrollBottom = window.scrollY + window.innerHeight;
+    const docHeight = document.documentElement.scrollHeight;
+
+    // Когда долистали до конца документа
+    if (scrollBottom >= docHeight - 5) {
+      finalEl.classList.add('active');
+      smileysEl.style.display = 'none';
+    } else if (!triggered) {
+      // Начали скроллить — запускаем смайлики
       launchSmileys();
     }
   }
 
   window.addEventListener('scroll', checkScroll);
-
-  // Детект тряски
-  let lastX = null, lastY = null, lastZ = null;
-  const threshold = 15;
-
-  window.addEventListener('devicemotion', (e) => {
-    const acc = e.accelerationIncludingGravity;
-    if (!acc) return;
-
-    if (lastX !== null) {
-      const delta = Math.abs(acc.x - lastX) + Math.abs(acc.y - lastY) + Math.abs(acc.z - lastZ);
-      if (delta > threshold) launchSmileys();
-    }
-
-    lastX = acc.x; lastY = acc.y; lastZ = acc.z;
-  });
-
-  // Фоллбек для десктопа — клик
-  verityEl.addEventListener('click', launchSmileys);
+  checkScroll();
 </script>
 </body>
 </html>
